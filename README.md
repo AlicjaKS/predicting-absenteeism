@@ -320,11 +320,8 @@ We still have 'inputs' before scalling so we can use them! :smile:, so:
 ```
 features = inputs.columns.values
 ```
-lets sum it up in table: 
-```
-table = pd.DataFrame(columns = ['Feature'], data = features)
-table['Coefficients'] = np.transpose(reg.coef_) 
-```
+lets sum it up in table with intercept, I used method that I used in preprocessing the data. 
+
 
 
 
