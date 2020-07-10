@@ -168,3 +168,163 @@ d_pre = d_mod1.copy()
 Before we will start using ML we need to export this data as a *.csv file. Store this file in the same folder where you are currently working on. 
 
 To machine learning part I will use the other notebook. 
+Why? 
+- Usually in teams different person is responsible for preprocessing and different one for actual ML 
+- Because preprocessing file may start lagging 
+- And because maybe we don’t know which method we should use and we can try several of them in different files 
+
+Since is the new file we have to import libraries: 
+```
+import pandas as pd
+import numpy as np
+```
+and load the preprocessed data: 
+```
+data = pd.read_csv('Absenteeism_preprocessed.csv')
+```
+We will use logistic regression. It is classifying technique so we are kind of classifying people into classes. 
+The classes that we can make are: 
+- people who are often absent 
+- people who are not often absent 
+
+We need cut-off line so we can use median. Everything below the medial will be considered as normal and above as often absent. 
+```
+data['Absenteeism time in hours'].median()
+```
+Result is 3.0 so we can make classes like this: 
+<= 3.0 normal 
+>= 4.0 often absent 
+
+And this classes we have to change into 0s and 1s. It will be our targets. 
+```
+targets = np.where(data['Absenteeism time in hours'] > 3, 1, 0)
+```
+the numbers are respectively: np.where(condition,value if true, value if false) 
+
+We can also write it like this to make it clearer: 
+```
+targets = np.where(data['Absenteeism time in hours'] > data['Absenteeism time in hours'].median(), 1, 0) 
+```
+And add it to our data: 
+```
+data['Excessive absenteeism'] = targets
+```
+
+I used median because it's also balancing the data 
+```
+targets.sum() / targets.shape[0]
+```
+and the result is around 0.46. And we can use split up to 40%-60% in logistic regression. When it comes to NN it need to be more balanced 55%-45%. 
+
+Now we are creating inputs for regression: 
+```
+inputs = data.iloc[:, 0:22]
+```
+or even simplier: 
+```
+inputs = data.iloc[:,:-1]
+```
+Now we have to standarize the data: 
+importing libraries, creating an object to scale data
+```
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+
+scaler.fit(inputs)
+```
+Scaler will be substracting the mean and devide it by the standard deviation, actual scalling: 
+```
+scaled_inputs = scaler.transform(inputs)
+```
+we can use scaler and transform function to new data too! 
+
+Next we have to shuffle the data and split it into training dataset and test dataset. 
+```
+from sklearn.model_selection import train_test_split
+train_test_split(scaled_inputs, targets)
+```
+sklearn also id doing shuffling, if you rerun this code you will get everytime different output 
+
+Output have four arrays: 
+training inputs 
+testing inputs 
+training outputs
+testing outputs 
+
+assigning arrays: 
+```
+x_train, x_test, y_train, y_test = train_test_split(scaled_inputs, targets)
+```
+
+We can check if it is splitted correctly: 
+```
+x_test.shape[0] / (x_train.shape[0] + x_test.shape[0])
+```
+
+This means that we have 25 / 75 split because it is set by default, usually we have 20 / 80 or 10 / 90 because we want to train on more data, so we can change it here: 
+```
+x_train, x_test, y_train, y_test = train_test_split(scaled_inputs, targets, train_size = 0.8, random_state = 20)
+```
+by random_state we make shuffle that it going to be shuffled in the same 'random' way 
+
+Ok. Its end of the preprocessing, this time for real :smile: 
+
+```
+from sklearn.linear_model import LogisticRegression
+from sklearn import metrics
+```
+
+ML part: 
+```
+reg = LogisticRegression()
+reg.fit(x_train, y_train)
+```
+
+as an output we got parameters that we can change 
+```
+reg.score(x_train, y_train)
+```
+Accuracy of my model is around 76% 
+in other words : model learned to classify 76% of observation correclty
+
+We can also check accuracy manually: 
+```
+model_outputs = reg.predict(x_train)
+```
+^ here are stored outputs from our model 
+
+y_train contains true output so we can compare it 
+```
+y_train.shape
+```
+```
+np.sum(model_outputs == y_train) 
+```
+and by deviding it: 
+```
+np.sum(model_outputs == y_train)/ y_train.shape
+```
+
+Intercept & coefficients: 
+
+```
+reg.intercept_
+```
+```
+reg.coef_
+```
+
+Okay, it was easy :smile:. But its not says a lot, we want to know which variables this coefficients describes. We cannot get names of the columns simpy by columns.values using on scaled_inputs, because it is no longer pandas DataFrame, we used sklearn so the results are stored as "ndarray". 
+BUT! 
+We still have 'inputs' before scalling so we can use them! :smile:, so: 
+```
+features = inputs.columns.values
+```
+lets sum it up in table: 
+```
+table = pd.DataFrame(columns = ['Feature'], data = features)
+table['Coefficients'] = np.transpose(reg.coef_) 
+```
+
+
+
