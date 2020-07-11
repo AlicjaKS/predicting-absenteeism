@@ -385,7 +385,7 @@ scaler = CustomScaler(col_scale)
 ```
 
 And re-run the code. 
-###Now we habe interpretable result! :star_struck:
+### Now we have interpretable result! :star_struck:
 Now we see that the most important is Reason 3 - so if somebody as a reason of absence used 'poisonign etc' it almost 6x more likely that this person will be also (after poisoning) absent excessive comparing to the baseline (reason 0 - no reason given). 
 
 Now the least important features are:
@@ -400,3 +400,35 @@ Intercept only calibraze the model so we dont interpret it.
 And on this part i finish my notebook called MLpart_complex. 
 
 
+Now I will try simplify the model by deleting this feature which are not so important. This method is called 'backward elimination' 
+I drop some features and rerun the code - it provides almost no difference so that is double check to know that those features were not important. 
+As the always simplier model is better I will do testing on this one. 
+```
+reg.score(x_train, y_train)
+
+```
+This is accuracy of the model on the training set, it is around 76% but it doesnt mean much. 
+
+```
+reg.score(x_test, y_test)
+
+```
+77% accuracy, is higher than on the test set so I was lucky or I made a mistake :sleepy: 
+(I will try to improve it!) 
+
+Anyway now lets save it and deploy 
+The easies way to do it is by module pickle which coverts python objects into character stream 
+```
+import pickle
+
+with open ('ABSENT_model', 'wb') as file:
+    pickle.dump(reg, file)
+    
+    
+with open ('Scaler', 'wb') as file:
+    pickle.dump(Scaler, file)
+ ```
+ 
+ The second step of deployment is about creating a mechanism that will open the model and make predictions. It is all saved in module.py 
+ 
+ 
