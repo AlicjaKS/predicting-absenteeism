@@ -322,6 +322,81 @@ features = inputs.columns.values
 ```
 lets sum it up in table with intercept, I used method that I used in preprocessing the data. 
 
+Now let's focus of coefficients (in other word weights): 
+In ML we use standarized coefficients, when we are daling with logistic regression they are log(odds) so to make them easier to intepretate:
+```
+table['Odds ratio'] = np.exp(table.Coefficient)
+```
+np.exp calculate the exponential of all elements in the input array.
+```
+table = table.sort_values('Odds ratio', ascending = False)
+```
+Now we have the most important reasons in the order
+How to interpretate it? 
+If odd ratio is around = 1.00 and coefficient around = 0.00 means that a feature is not so important 
+In our case those not important features are: 
+Education	-0.004244	0.995765
+and
+Hit target	-0.007656	0.992373
 
+:point_right: Looking at this we could say that if reason for absent is on from group of 'reason1' it is 2.7 more likely that this person will be absent often. But we used standarization for our dummies so we cannot interprate them! 
+
+So I went back to the moment when I was standarizing the data and build more customable scaler. 
+
+idea found here: https://stackoverflow.com/questions/37685412/avoid-scaling-binary-columns-in-sci-kit-learn-standsardscaler
+```
+from sklearn.preprocessing import StandardScaler
+from sklearn.base import BaseEstimator, TransformerMixin
+ def __init__(self,columns,copy=True,with_mean=True,with_std=True):
+        self.scaler = StandardScaler(copy,with_mean,with_std)
+        self.columns = columns
+        self.mean_ = None
+        self.var_ = None
+        
+    def fit(self, X, y=None):
+        self.scaler.fit(X[self.columns], y)
+        self.mean_ = np.mean(X[self.columns])
+        self.var_ = np.var(X[self.columns])
+        return self
+    
+    def transform(self, X, y=None, copy=None):
+    
+        init_col_order = X.columns
+        X_scaled = pd.DataFrame(self.scaler.transform(X[self.columns]), columns=self.columns)
+        X_not_scaled = X.loc[:,~X.columns.isin(self.columns)]
+        return pd.concat([X_not_scaled, X_scaled], axis=1)[init_col_order] 
+```
+  It is custom scaler based on the StandardScaler from sklearn, have extra argument telling which columns have to be scalled so we can choose imputs to scale. 
+  
+  First we declare which column we want to be scaled (I'm deleting all binary data): 
+```  
+  col_scale = ['Month of absence',
+       'Day of the week', 'Transportation expense',
+       'Distance from Residence to Work', 'Service time', 'Age',
+       'Work load Average/day ', 'Hit target',
+       'Son', 'Pet',
+       'Weight', 'Height', 'Body mass index']
+```
+
+Then using our scaler: 
+```
+scaler = CustomScaler(col_scale)
+
+```
+
+And re-run the code. 
+###Now we habe interpretable result! :star_struck:
+Now we see that the most important is Reason 3 - so if somebody as a reason of absence used 'poisonign etc' it almost 6x more likely that this person will be also (after poisoning) absent excessive comparing to the baseline (reason 0 - no reason given). 
+
+Now the least important features are:
+Work load Average/day	              0.042342	1.043251
+Hit target	                            0.019392	1.019581
+Education	                            0.017771	1.017930
+Distance from Residence to Work	      -0.048218	0.952926
+
+When it comes to non binary data they are still standarized. And its main drawback of standarization. 
+
+Intercept only calibraze the model so we dont interpret it. 
+And on this part i finish my notebook called MLpart_complex. 
 
 
